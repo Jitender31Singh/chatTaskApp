@@ -2,9 +2,12 @@ package com.example.pocflask
 
 import android.Manifest
 import android.util.Log
+import android.view.MotionEvent
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,9 +39,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -77,6 +83,7 @@ fun ChatPage(
 
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun MessageInput(voiceToTextParser: VoiceToTextParser,onMessageSend:(String)->Unit){
     val state by voiceToTextParser.state.collectAsState()
@@ -129,25 +136,59 @@ fun MessageInput(voiceToTextParser: VoiceToTextParser,onMessageSend:(String)->Un
             Icon(imageVector = Icons.Default.Send,contentDescription = "Send")
         }
 
-        IconButton(onClick = {
-            if (state.isSpeaking) {
-                voiceToTextParser.stopListening()
-            } else {
-                if (canRecord) {
-                    voiceToTextParser.startListening("en")
-                } else {
-                    recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                }
-            }
-        }) {
+//        IconButton(onClick = {
+//            if (state.isSpeaking) {
+//                voiceToTextParser.stopListening()
+//            } else {
+//                if (canRecord) {
+//                    voiceToTextParser.startListening("en")
+//                } else {
+//                    recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+//                }
+//            }
+//        }) {
+//            AnimatedContent(targetState = state.isSpeaking) { isSpeaking ->
+//                if (isSpeaking) {
+//                    Icon(imageVector = Icons.Rounded.Stop, contentDescription = "Stop Recording")
+//                } else {
+//                    Icon(imageVector = Icons.Rounded.Mic, contentDescription = "Start Recording")
+//                }
+//            }
+//        }
+
+        Box(
+            modifier = Modifier
+                .size(56.dp)
+                .clip(RoundedCornerShape(28.dp))
+                .background(if (state.isSpeaking) Color.Red else Color.Gray)
+                .pointerInteropFilter {
+                    when (it.action) {
+                        MotionEvent.ACTION_DOWN -> {
+                            if (canRecord) {
+                                voiceToTextParser.startListening("en-IN")
+                            } else {
+                                recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                            true
+                        }
+                        MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                            voiceToTextParser.stopListening()
+                            true
+                        }
+                        else -> false
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
             AnimatedContent(targetState = state.isSpeaking) { isSpeaking ->
-                if (isSpeaking) {
-                    Icon(imageVector = Icons.Rounded.Stop, contentDescription = "Stop Recording")
-                } else {
-                    Icon(imageVector = Icons.Rounded.Mic, contentDescription = "Start Recording")
-                }
+                Icon(
+                    imageVector = if (isSpeaking) Icons.Rounded.Stop else Icons.Rounded.Mic,
+                    contentDescription = if (isSpeaking) "Stop Listening" else "Hold to Speak",
+                    tint = Color.White
+                )
             }
         }
+
 
     }
 
@@ -182,31 +223,69 @@ fun MessageList(modifier: Modifier=Modifier,messageList: List<MessageModel>){
 
 }
 
+//@Composable
+//fun MessageRow(messageModel: MessageModel){
+//    val isModel=messageModel.role=="model"
+//    Row(
+//        verticalAlignment = Alignment.CenterVertically
+//    ){
+//        Box(
+//            modifier = Modifier.fillMaxWidth()
+//        ){
+//            Box(modifier = Modifier.align(if (isModel) Alignment.BottomStart else Alignment.BottomEnd)
+//                .padding(
+//                    start = if(isModel) 8.dp else 70.dp,
+//                    end = if(isModel)70.dp else 8.dp,
+//                    top = 8.dp,
+//                    bottom = 8.dp
+//                ).clip(RoundedCornerShape(40f))
+//                .background(if(isModel) ColorModelMessage else ColorUserMessage)
+//                .padding(16.dp)){
+//                SelectionContainer {
+//                    Text(text=messageModel.message, fontWeight = FontWeight.W500, color = Color.White)
+//                }
+//            }
+//        }
+//    }
+//
+//}
+
 @Composable
-fun MessageRow(messageModel: MessageModel){
-    val isModel=messageModel.role=="model"
+fun MessageRow(messageModel: MessageModel) {
+    val isModel = messageModel.role == "model"
     Row(
-        verticalAlignment = Alignment.CenterVertically
-    ){
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = if (isModel) Arrangement.Start else Arrangement.End
+    ) {
+        if (isModel) {
+            Image(
+                painter = painterResource(id = R.drawable.img),
+                contentDescription = "Bot",
+                modifier = Modifier
+                    .size(30.dp)
+                    .padding(end = 4.dp)
+            )
+        }
+
         Box(
-            modifier = Modifier.fillMaxWidth()
-        ){
-            Box(modifier = Modifier.align(if (isModel) Alignment.BottomStart else Alignment.BottomEnd)
-                .padding(
-                    start = if(isModel) 8.dp else 70.dp,
-                    end = if(isModel)70.dp else 8.dp,
-                    top = 8.dp,
-                    bottom = 8.dp
-                ).clip(RoundedCornerShape(40f))
-                .background(if(isModel) ColorModelMessage else ColorUserMessage)
-                .padding(16.dp)){
-                SelectionContainer {
-                    Text(text=messageModel.message, fontWeight = FontWeight.W500, color = Color.White)
-                }
+            modifier = Modifier
+                .clip(RoundedCornerShape(40f))
+                .background(if (isModel) ColorModelMessage else ColorUserMessage)
+                .padding(16.dp)
+                .widthIn(max = 280.dp)
+        ) {
+            SelectionContainer {
+                Text(
+                    text = messageModel.message,
+                    fontWeight = FontWeight.W500,
+                    color = Color.White
+                )
             }
         }
     }
-
 }
 
 @Composable
