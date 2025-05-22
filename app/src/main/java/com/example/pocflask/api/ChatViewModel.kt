@@ -13,7 +13,8 @@ import kotlinx.coroutines.launch
 class ChatViewModel: ViewModel() {
     val messageList by lazy {
         mutableStateListOf<MessageModel>().apply {
-            add(MessageModel("Hello,\n please provide taskDescription ,priority,start time ,duration and customer name", "model")) // 👈 Add default message
+            add(MessageModel("Hey, I am TrackOBot. Let's make a new task.","model"))
+            add(MessageModel("Please provide your Task Description, Customer name, Priority, Start time and Duration", "model"))
         }
     }
     var currentTask by mutableStateOf(TaskData())

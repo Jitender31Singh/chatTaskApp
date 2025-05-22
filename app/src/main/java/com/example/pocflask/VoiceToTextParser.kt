@@ -21,12 +21,13 @@ class VoiceToTextParser(
 
     fun startListening(languageCode: String){
         _state.update { VoiceToTextParserState() }
-        if(SpeechRecognizer.isRecognitionAvailable(app)){
+        if(!SpeechRecognizer.isRecognitionAvailable(app)){
             _state.update{
                 it.copy(
                     error = "Recognization is not available"
                 )
             }
+            return
         }
 
         val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -35,6 +36,9 @@ class VoiceToTextParser(
                 RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
             )
             putExtra(RecognizerIntent.EXTRA_LANGUAGE,languageCode)
+//            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000) // 3 seconds
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 3000)
+//            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1500)
         }
 
         recognizer.setRecognitionListener(this)
