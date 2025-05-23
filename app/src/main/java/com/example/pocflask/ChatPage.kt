@@ -43,13 +43,13 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.pocflask.api.ChatViewModel
+import com.example.pocflask.data.dummyCustomers
 import com.example.pocflask.ui.theme.ColorModelMessage
 import com.example.pocflask.ui.theme.ColorUserMessage
 import com.example.pocflask.ui.theme.Purple80
@@ -62,11 +62,27 @@ fun ChatPage(
     navController: NavHostController
 ){
     val currentTask = chatViewModel.currentTask
+    val selectedType=chatViewModel.selectedSiteType
 
     // Observe allfilled and navigate when true
-    LaunchedEffect(currentTask.allfilled) {
-        if (currentTask.allfilled) {
-            navController.navigate("task_page") {
+    LaunchedEffect(selectedType) {
+        if(selectedType=="Location"){
+            navController.navigate("location_page") {
+                popUpTo("chat_page") { inclusive = true } // Optional: clears backstack
+            }
+        }
+        if(selectedType=="None"){
+            Log.i("none is selected","yes")
+            navController.navigate("none_page") {
+                popUpTo("chat_page") { inclusive = true } // Optional: clears backstack
+            }
+        }
+    }
+
+    LaunchedEffect(chatViewModel.customerName) {
+
+        if (currentTask.customerName!=null && currentTask.customerName!!.isNotBlank()) {
+            navController.navigate("customer_page") {
                 popUpTo("chat_page") { inclusive = true } // Optional: clears backstack
             }
         }
@@ -75,7 +91,7 @@ fun ChatPage(
         modifier = modifier
     ) {
         AppHeader()
-        MessageList(modifier= Modifier.weight(1f),chatViewModel.messageList)
+        MessageList(modifier= Modifier.weight(1f),chatViewModel.messageList,chatViewModel = chatViewModel)
         MessageInput(voiceToTextParser, onMessageSend = {
             chatViewModel.sendMessage(it)
         })
@@ -136,26 +152,6 @@ fun MessageInput(voiceToTextParser: VoiceToTextParser,onMessageSend:(String)->Un
             Icon(imageVector = Icons.Default.Send,contentDescription = "Send")
         }
 
-//        IconButton(onClick = {
-//            if (state.isSpeaking) {
-//                voiceToTextParser.stopListening()
-//            } else {
-//                if (canRecord) {
-//                    voiceToTextParser.startListening("en")
-//                } else {
-//                    recordAudioLauncher.launch(Manifest.permission.RECORD_AUDIO)
-//                }
-//            }
-//        }) {
-//            AnimatedContent(targetState = state.isSpeaking) { isSpeaking ->
-//                if (isSpeaking) {
-//                    Icon(imageVector = Icons.Rounded.Stop, contentDescription = "Stop Recording")
-//                } else {
-//                    Icon(imageVector = Icons.Rounded.Mic, contentDescription = "Start Recording")
-//                }
-//            }
-//        }
-
         Box(
             modifier = Modifier
                 .size(56.dp)
@@ -171,10 +167,12 @@ fun MessageInput(voiceToTextParser: VoiceToTextParser,onMessageSend:(String)->Un
                             }
                             true
                         }
+
                         MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                             voiceToTextParser.stopListening()
                             true
                         }
+
                         else -> false
                     }
                 },
@@ -196,7 +194,10 @@ fun MessageInput(voiceToTextParser: VoiceToTextParser,onMessageSend:(String)->Un
 
 
 @Composable
-fun MessageList(modifier: Modifier=Modifier,messageList: List<MessageModel>){
+fun MessageList(
+    modifier: Modifier=Modifier,
+    messageList: List<MessageModel>,
+    chatViewModel: ChatViewModel){
     if(messageList.isEmpty()){
         Column(
             modifier=modifier.fillMaxSize(),
@@ -220,35 +221,22 @@ fun MessageList(modifier: Modifier=Modifier,messageList: List<MessageModel>){
             }
         }
     }
+    if (chatViewModel.showSiteTypeSelector) {
+        SiteTypeSelector(
+            onSelect = { chatViewModel.onSiteTypeSelected(it) }
+        )
+    }
+
+    if (chatViewModel.showCustomerSelector) {
+        CustomerSelector(
+            customers = dummyCustomers,
+            onCustomerSelected = { chatViewModel.onCustomerSelected(it.name) }
+        )
+    }
 
 }
 
-//@Composable
-//fun MessageRow(messageModel: MessageModel){
-//    val isModel=messageModel.role=="model"
-//    Row(
-//        verticalAlignment = Alignment.CenterVertically
-//    ){
-//        Box(
-//            modifier = Modifier.fillMaxWidth()
-//        ){
-//            Box(modifier = Modifier.align(if (isModel) Alignment.BottomStart else Alignment.BottomEnd)
-//                .padding(
-//                    start = if(isModel) 8.dp else 70.dp,
-//                    end = if(isModel)70.dp else 8.dp,
-//                    top = 8.dp,
-//                    bottom = 8.dp
-//                ).clip(RoundedCornerShape(40f))
-//                .background(if(isModel) ColorModelMessage else ColorUserMessage)
-//                .padding(16.dp)){
-//                SelectionContainer {
-//                    Text(text=messageModel.message, fontWeight = FontWeight.W500, color = Color.White)
-//                }
-//            }
-//        }
-//    }
-//
-//}
+
 
 @Composable
 fun MessageRow(messageModel: MessageModel) {

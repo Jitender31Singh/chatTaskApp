@@ -1,14 +1,15 @@
 package com.example.pocflask.api
 
+//Removing location and customer name
 data class TaskData(
-    val taskDescription: String? = null,
+    var taskDescription: String? = null,
     val location: String? = null,
-    val priority: String? = null,
-    val startTime: String? = null,
-    val endTime: String? = null,
-    val customerName: String? = null,
+    var priority: String? = null,
+    var startTime: String? = null,
+    var endTime: String? = null,
+    var customerName: String? = null,
     val message: String? = null,
-    val allfilled: Boolean = false
+    var allfilled: Boolean = false
 )
 
 data class PromptRequest(

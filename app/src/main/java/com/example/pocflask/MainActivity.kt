@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
     val voiceToTextParser by lazy {
         VoiceToTextParser(application)
     }
-
+//    this is testing comment
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,9 +57,19 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-                    composable("task_page") {
-                        TaskPage(chatViewModel=chatViewModel,navController)
+                    composable("customer_page") {
+                        CustomerTask(chatViewModel=chatViewModel,navController)
                     }
+
+                    composable("location_page") {
+                        CustomerTask(chatViewModel=chatViewModel,navController)
+                    }
+
+                    composable("none_page") {
+                        NoneTask(chatViewModel=chatViewModel,navController)
+                    }
+
+
                 }
             }
         }
