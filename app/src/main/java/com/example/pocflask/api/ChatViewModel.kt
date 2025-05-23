@@ -11,18 +11,56 @@ import com.example.pocflask.MessageModel
 import kotlinx.coroutines.launch
 
 class ChatViewModel: ViewModel() {
+
+    var showSiteTypeSelector by mutableStateOf(false)
+    var showCustomerSelector by mutableStateOf(false)
+    var selectedSiteType by mutableStateOf<String?>(null)
+    var customerName by mutableStateOf<String?>(null)
+
+    var currentTask by mutableStateOf(TaskData())
+        private set
+    var previousTask by mutableStateOf(TaskData())
+        private set
+
     val messageList by lazy {
         mutableStateListOf<MessageModel>().apply {
             add(MessageModel("Hey, I am TrackOBot. Let's make a new task.","model"))
             add(MessageModel("Please provide your Task Description, Customer name, Priority, Start time and Duration", "model"))
+
         }
     }
-    var currentTask by mutableStateOf(TaskData())
-        private set
+    init {
+        // Add the third message
+
+    }
+
+    fun onSiteTypeSelected(type: String) {
+        selectedSiteType = type
+        showSiteTypeSelector = false
+
+        if (type == "Customer") {
+            showCustomerSelector = true
+        } else {
+            currentTask = currentTask.copy(allfilled = true)
+        }
+    }
+
+    fun onCustomerSelected(name: String) {
+        Log.i("name cust",  name)
+        currentTask.customerName=name
+        customerName=name;
+        Log.i("customer",  currentTask.toString())
+        showCustomerSelector = false
+    }
+
     fun sendMessage(question: String) {
         messageList.add(MessageModel(question,"user"))
-        getHomeData()
-        sendPromptToServer(question)
+        if(currentTask.allfilled){
+            messageList.add(MessageModel("Please select site type", "model"))
+            showSiteTypeSelector=true
+        }else{
+            sendPromptToServer(question)
+        }
     }
 
     fun sendPromptToServer(promptText: String) {
@@ -34,6 +72,23 @@ class ChatViewModel: ViewModel() {
                 Log.i("res1", taskData.toString())
                 currentTask=taskData
                 messageList.add(MessageModel(taskData.message.toString(),"model"))
+
+                if(previousTask.taskDescription!=null && currentTask.taskDescription==null){
+                    currentTask.taskDescription=previousTask.taskDescription
+                }
+                if(previousTask.priority!=null && currentTask.priority==null){
+                    currentTask.priority=previousTask.priority
+                }
+                if(previousTask.startTime!=null && currentTask.startTime==null){
+                    currentTask.startTime=previousTask.startTime
+                }
+                if(previousTask.endTime!=null && currentTask.endTime==null){
+                    currentTask.endTime=previousTask.endTime
+                }
+                if(currentTask.taskDescription!=null &&currentTask.priority!=null && currentTask.startTime!=null &&currentTask.endTime!=null ){
+                    currentTask.allfilled=true
+                }
+                previousTask=currentTask
             } else {
                 Log.i("error", "response unsuccessful or empty")
             }
