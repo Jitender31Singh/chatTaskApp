@@ -1,6 +1,8 @@
 package com.example.pocflask.api
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 class ChatViewModel: ViewModel() {
 
@@ -25,7 +29,6 @@ class ChatViewModel: ViewModel() {
         mutableStateListOf<MessageModel>().apply {
             add(MessageModel("Hey, I am TrackOBot. Let's make a new task.","model"))
             add(MessageModel("Please provide your Task Description, Priority, Start time and end time", "model"))
-
         }
     }
 
@@ -48,6 +51,7 @@ class ChatViewModel: ViewModel() {
         showCustomerSelector = false
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun sendMessage(question: String) {
         messageList.add(MessageModel(question,"user"))
         messageList.add(MessageModel("Typing...","model"))
@@ -56,9 +60,13 @@ class ChatViewModel: ViewModel() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun sendPromptToServer(promptText: String) {
-        val prompt = PromptRequest(promptText)
-        Log.i("1st", "inside you ")
+        var promptWithHistory=promptText
+        if(previousTask.startTime!=null){
+            promptWithHistory="this is old  start time : ${previousTask.startTime} and this is new prompt :"+promptWithHistory
+        }
+        val prompt = PromptRequest(promptWithHistory)
         viewModelScope.launch {
             Log.i("original prior","inside" )
             val call= RetrofitClient.apiService.sendPrompt(prompt)
@@ -67,8 +75,8 @@ class ChatViewModel: ViewModel() {
                 val taskData: TaskData = call.body()!!.answer
                 Log.i("res1", taskData.toString())
                 currentTask=taskData
-                messageList.add(MessageModel(taskData.message.toString(),"model"))
-                messageList.removeAt(messageList.size - 2)
+//                messageList.add(MessageModel(taskData.message.toString(),"model"))
+//                messageList.removeAt(messageList.size - 2)
 
                 if(previousTask.taskDescription.toString().isNotEmpty() && currentTask.taskDescription.toString().isEmpty()){
                     currentTask.taskDescription=previousTask.taskDescription
@@ -85,26 +93,56 @@ class ChatViewModel: ViewModel() {
                 if(currentTask.taskDescription!=null &&currentTask.priority!=null && currentTask.startTime!=null &&currentTask.endTime!=null ){
                     currentTask.allfilled=true
                 }
-
+                var missingFields = mutableListOf<String>()
+                var missingMessage="Please provide: "
 
                 if(currentTask.taskDescription==null){
-                    currentTask.message="please provide task description"
-                }
-                if(currentTask.endTime==null){
-                    currentTask.message="please provide end time"
-                }
-                else if(currentTask.startTime==null){
-                    currentTask.message="please provide start time"
+                    missingFields.add("Task Description")
                 }
                 if(currentTask.priority==null){
-                    currentTask.message="please provide priority"
+                    missingFields.add("Priority")
                 }
+                if(currentTask.startTime==null){
+                    missingFields.add("Start Time")
+                }
+                if(currentTask.startTime!=null){
+                    val formatter= DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a")
+                    val currentDateTime = LocalDateTime.now()
+                    val start= LocalDateTime.parse(currentTask.startTime,formatter)
+                    if(currentDateTime.isAfter(start)){
+                        missingFields.add("Start time should be more than current time")
+                    }
+                }
+
+                if(currentTask.endTime!=null &&currentTask.startTime!=null){
+                    val formatter= DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a")
+                    val currentDateTime = LocalDateTime.now()
+                    val start= LocalDateTime.parse(currentTask.startTime,formatter)
+                    val end= LocalDateTime.parse(currentTask.endTime,formatter)
+                    if(start.isAfter(end)){
+                        missingFields.add("End time should be more than Start time : ${currentTask.startTime}")
+                    }
+                }
+
+                if(currentTask.endTime==null){
+                    missingFields.add("End Time")
+                }
+
+                for (field in missingFields) {
+                    missingMessage=missingMessage+field.toString()+", "
+                }
+
+                if(missingFields.size>0){
+                    currentTask.message=missingMessage.dropLast(2)
+                }
+                missingFields.clear()
                 Log.i("Current task",currentTask.toString())
                 if(!currentTask.allfilled){
                     messageList.add(MessageModel(currentTask.message.toString(),"model"))
                     messageList.removeAt(messageList.size - 2)
                 }else{
-                    messageList.add(MessageModel("Please select site type", "model"))
+//                    messageList.add(MessageModel("Please select site type", "model"))
+                    messageList.removeAt(messageList.size - 1)
                     showSiteTypeSelector=true
                 }
                 previousTask=currentTask
@@ -117,6 +155,8 @@ class ChatViewModel: ViewModel() {
         }
 
     }
+
+
 
     fun getHomeData(){
         viewModelScope.launch {

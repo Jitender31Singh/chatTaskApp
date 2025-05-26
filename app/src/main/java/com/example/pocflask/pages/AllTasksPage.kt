@@ -2,9 +2,12 @@ package com.example.pocflask.pages
 
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -15,6 +18,7 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -24,40 +28,39 @@ import com.example.pocflask.api.ChatViewModel
 import com.example.pocflask.api.TaskData
 
 
-@Composable
-fun AllTasksPage(taskViewModel: TaskViewModel = viewModel(), navController: NavHostController,chatViewModel: ChatViewModel) {
-    val taskList = taskViewModel.tasks
-
-    Column(modifier = Modifier.padding(16.dp)) {
-        Text("All Tasks", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        LazyColumn {
-            items(taskList){task->
-                TaskItem(task)
-                Divider()
-            }
-        }
-    }
-    Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Button(onClick = {
-            chatViewModel.resetMessageList()
-            Log.i("history", chatViewModel.messageList.toString())
-            chatViewModel.clearTasks()
-            navController.navigate("none_page") // or any screen to create new task
-        }) {
-            Text("+")
-        }
-
-        Button(onClick = {
-            chatViewModel.resetMessageList()
-            chatViewModel.clearTasks()
-            navController.navigate("chat_screen")
-        }) {
-            Text("Chat")
-        }
-    }
-}
+//@Composable
+//fun AllTasksPage(taskViewModel: TaskViewModel = viewModel(), navController: NavHostController,chatViewModel: ChatViewModel) {
+//    val taskList = taskViewModel.tasks
+//
+//    Column(modifier = Modifier.padding(16.dp)) {
+//        Text("All Tasks", style = MaterialTheme.typography.headlineMedium)
+//        Spacer(modifier = Modifier.height(16.dp))
+//
+//        LazyColumn {
+//            items(taskList){task->
+//                TaskItem(task)
+//                Divider()
+//            }
+//        }
+//    }
+//    Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+////        Button(onClick = {
+////            chatViewModel.resetMessageList()
+////            Log.i("history", chatViewModel.messageList.toString())
+////            chatViewModel.clearTasks()
+////            navController.navigate("none_page") // or any screen to create new task
+////        }) {
+////            Text("+")
+////        }
+//        Button(onClick = {
+//            chatViewModel.resetMessageList()
+//            chatViewModel.clearTasks()
+//            navController.navigate("chat_screen")
+//        }) {
+//            Text("Chat")
+//        }
+//    }
+//}
 
 @Composable
 fun TaskItem(task: TaskData) {
@@ -74,3 +77,46 @@ fun TaskItem(task: TaskData) {
         Text("Time: ${task.startTime} - ${task.endTime}")
     }
 }
+
+
+@Composable
+fun AllTasksPage(
+    taskViewModel: TaskViewModel = viewModel(),
+    navController: NavHostController,
+    chatViewModel: ChatViewModel
+) {
+    val taskList = taskViewModel.tasks
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+        ) {
+            Text("All Tasks", style = MaterialTheme.typography.headlineMedium)
+            Spacer(modifier = Modifier.height(16.dp))
+
+            LazyColumn(modifier = Modifier.weight(1f)) {
+                items(taskList) { task ->
+                    TaskItem(task)
+                    Divider()
+                }
+            }
+        }
+
+        // Floating-like Chat button
+        Button(
+            onClick = {
+                chatViewModel.resetMessageList()
+                chatViewModel.clearTasks()
+                navController.navigate("chat_screen")
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(24.dp)
+                .defaultMinSize(minWidth = 100.dp, minHeight = 56.dp) // Bigger size
+        ) {
+            Text("Chat", style = MaterialTheme.typography.bodyLarge)
+        }
+    }
+}
+

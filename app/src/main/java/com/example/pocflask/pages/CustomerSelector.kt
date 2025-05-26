@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.pocflask.data.Customer
 
-//import com.example.pocflask.Customer
 
 @Composable
 fun CustomerSelector(customers: List<Customer>, onCustomerSelected: (Customer) -> Unit) {
