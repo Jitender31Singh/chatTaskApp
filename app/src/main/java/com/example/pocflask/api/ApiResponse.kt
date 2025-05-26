@@ -1,6 +1,5 @@
-package com.example.pocflask
+package com.example.pocflask.api
 
-import com.example.pocflask.api.TaskData
 import com.google.gson.annotations.SerializedName
 
 data class ApiResponse(

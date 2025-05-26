@@ -1,4 +1,4 @@
-package com.example.pocflask
+package com.example.pocflask.pages
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -49,18 +49,13 @@ fun TaskPage(chatViewModel: ChatViewModel, navController: NavHostController) {
             onValueChange = { taskData = taskData.copy(endTime = it) }
         )
 
-        TaskField(label = "Location", value = taskData.location ?: "") {
-            taskData = taskData.copy(location = it)
-        }
+
 
         PriorityDropdown(
             selected = taskData.priority ?: "",
             onSelect = { taskData = taskData.copy(priority = it) }
         )
 
-        TaskField(label = "Customer Name", value = taskData.customerName ?: "") {
-            taskData = taskData.copy(customerName = it)
-        }
 
         Spacer(modifier = Modifier.size(24.dp))
 

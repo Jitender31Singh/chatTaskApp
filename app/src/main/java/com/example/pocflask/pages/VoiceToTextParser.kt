@@ -1,4 +1,4 @@
-package com.example.pocflask
+package com.example.pocflask.pages
 
 
 import android.app.Application
@@ -114,7 +114,7 @@ class VoiceToTextParser(
 }
 
 data class VoiceToTextParserState(
-    val spokenText:String="",
+    var spokenText:String="",
     val isSpeaking:Boolean=false,
     val error:String?=null,
 )

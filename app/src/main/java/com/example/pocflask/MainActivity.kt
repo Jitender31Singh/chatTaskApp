@@ -3,30 +3,20 @@ package com.example.pocflask
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.pocflask.api.ChatViewModel
-import com.example.pocflask.ui.theme.POCFlaskTheme
+import com.example.pocflask.pages.AllTasksPage
+import com.example.pocflask.pages.ChatPage
+import com.example.pocflask.pages.CustomerTask
+import com.example.pocflask.pages.NoneTask
+import com.example.pocflask.pages.VoiceToTextParser
 
 class MainActivity : ComponentActivity() {
     val voiceToTextParser by lazy {
@@ -37,6 +27,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val chatViewModel = ViewModelProvider(this)[ChatViewModel::class.java]
+        val taskViewModel= ViewModelProvider(this)[TaskViewModel::class.java]
 
         setContent {
             val navController = rememberNavController()
@@ -58,15 +49,19 @@ class MainActivity : ComponentActivity() {
                     }
 
                     composable("customer_page") {
-                        CustomerTask(chatViewModel=chatViewModel,navController)
+                        CustomerTask(chatViewModel = chatViewModel, navController,taskViewModel)
                     }
 
                     composable("location_page") {
-                        CustomerTask(chatViewModel=chatViewModel,navController)
+                        CustomerTask(chatViewModel = chatViewModel, navController,taskViewModel)
                     }
 
                     composable("none_page") {
-                        NoneTask(chatViewModel=chatViewModel,navController)
+                        NoneTask(chatViewModel = chatViewModel, navController,taskViewModel)
+                    }
+
+                    composable("allTasks") {
+                        AllTasksPage(taskViewModel,navController,chatViewModel)
                     }
 
 

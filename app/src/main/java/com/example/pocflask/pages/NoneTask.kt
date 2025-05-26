@@ -1,4 +1,4 @@
-package com.example.pocflask
+package com.example.pocflask.pages
 
 
 import androidx.compose.foundation.layout.*
@@ -10,10 +10,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.pocflask.TaskViewModel
 import com.example.pocflask.api.ChatViewModel
 
 @Composable
-fun NoneTask(chatViewModel: ChatViewModel, navController: NavHostController) {
+fun NoneTask(chatViewModel: ChatViewModel, navController: NavHostController,taskViewModel: TaskViewModel) {
     var taskData by remember { mutableStateOf(chatViewModel.currentTask) }
     if (taskData.allfilled) {
         chatViewModel.messageList.clear()
@@ -49,18 +50,23 @@ fun NoneTask(chatViewModel: ChatViewModel, navController: NavHostController) {
             onSelect = { taskData = taskData.copy(priority = it) }
         )
 
-        TaskField(label = "Customer Name", value = "none") {
-        }
+        TaskField(label = "site type", value = chatViewModel.selectedSiteType.toString()) { }
+
 
         Spacer(modifier = Modifier.size(24.dp))
 
         Button(
             onClick = {
                 navController.popBackStack()
+                taskViewModel.addTask(taskData)
+                navController.navigate("allTasks") {
+                    popUpTo("chat_page") { inclusive = true } // Optional: clears backstack
+                }
+
             },
             modifier = Modifier.align(Alignment.End)
         ) {
-            Text("Save")
+            Text("Make Task")
         }
     }
 }

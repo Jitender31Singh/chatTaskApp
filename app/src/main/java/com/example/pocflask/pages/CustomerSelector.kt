@@ -1,4 +1,4 @@
-package com.example.pocflask
+package com.example.pocflask.pages
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

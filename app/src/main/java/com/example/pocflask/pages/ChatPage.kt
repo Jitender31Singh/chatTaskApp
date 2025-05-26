@@ -1,4 +1,4 @@
-package com.example.pocflask
+package com.example.pocflask.pages
 
 import android.Manifest
 import android.util.Log
@@ -48,6 +48,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.pocflask.api.MessageModel
+import com.example.pocflask.R
 import com.example.pocflask.api.ChatViewModel
 import com.example.pocflask.data.dummyCustomers
 import com.example.pocflask.ui.theme.ColorModelMessage
@@ -72,7 +74,6 @@ fun ChatPage(
             }
         }
         if(selectedType=="None"){
-            Log.i("none is selected","yes")
             navController.navigate("none_page") {
                 popUpTo("chat_page") { inclusive = true } // Optional: clears backstack
             }
@@ -81,7 +82,8 @@ fun ChatPage(
 
     LaunchedEffect(chatViewModel.customerName) {
 
-        if (currentTask.customerName!=null && currentTask.customerName!!.isNotBlank()) {
+        if (chatViewModel.customerName!=null && chatViewModel.customerName!!.isNotBlank()) {
+            Log.i("user", chatViewModel.currentTask.toString())
             navController.navigate("customer_page") {
                 popUpTo("chat_page") { inclusive = true } // Optional: clears backstack
             }
@@ -101,7 +103,7 @@ fun ChatPage(
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun MessageInput(voiceToTextParser: VoiceToTextParser,onMessageSend:(String)->Unit){
+fun MessageInput(voiceToTextParser: VoiceToTextParser, onMessageSend:(String)->Unit){
     val state by voiceToTextParser.state.collectAsState()
     var message by remember { mutableStateOf("") }
     var canRecord by remember { mutableStateOf(false) }
@@ -126,6 +128,7 @@ fun MessageInput(voiceToTextParser: VoiceToTextParser,onMessageSend:(String)->Un
         if (state.spokenText.isNotBlank()) {
             Log.i("spoken message",state.spokenText )
             onMessageSend(state.spokenText)
+            state.spokenText=""
         }
     }
 
