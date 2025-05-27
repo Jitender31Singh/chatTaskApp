@@ -2,11 +2,13 @@ package com.example.pocflask.pages
 
 
 import android.app.Application
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -14,10 +16,11 @@ import kotlinx.coroutines.flow.update
 class VoiceToTextParser(
     private val app:Application
 ):RecognitionListener {
+
     private val _state= MutableStateFlow(VoiceToTextParserState())
     val state=_state.asStateFlow()
 
-    val recognizer=SpeechRecognizer.createSpeechRecognizer(app)
+    private val recognizer = SpeechRecognizer.createSpeechRecognizer(app)
 
     fun startListening(languageCode: String){
         _state.update { VoiceToTextParserState() }
@@ -31,19 +34,19 @@ class VoiceToTextParser(
         }
 
         val intent=Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(
-                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-            )
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             putExtra(RecognizerIntent.EXTRA_LANGUAGE,languageCode)
-//            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 5000) // 3 seconds
+//            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+//            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, Long.MAX_VALUE)
+//            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, Long.MAX_VALUE)
+
             putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 3000)
-//            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1500)
+
         }
 
         recognizer.setRecognitionListener(this)
         recognizer.startListening(intent)
-
+        Log.i("3","4" )
         _state.update{
             it.copy(
                 isSpeaking = true
@@ -52,6 +55,7 @@ class VoiceToTextParser(
 
     }
     fun stopListening(){
+        Log.i("5","6" )
         _state.update {
             it.copy(
                 isSpeaking = false
@@ -62,6 +66,7 @@ class VoiceToTextParser(
 
 
     override fun onReadyForSpeech(params: Bundle?) {
+        Log.d(TAG, "onReadyForSpeech")
         _state.update {
             it.copy(
                 error=null

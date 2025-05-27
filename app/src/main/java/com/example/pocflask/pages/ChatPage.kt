@@ -1,11 +1,13 @@
 package com.example.pocflask.pages
 
 import android.Manifest
+import android.os.Build
 import android.util.Log
 import android.view.MotionEvent
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -56,6 +58,7 @@ import com.example.pocflask.ui.theme.ColorModelMessage
 import com.example.pocflask.ui.theme.ColorUserMessage
 import com.example.pocflask.ui.theme.Purple80
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ChatPage(
     modifier: Modifier = Modifier,
@@ -290,7 +293,7 @@ fun AppHeader() {
             modifier = Modifier.padding(16.dp),
             color = Color.White,
             fontSize = 22.sp,
-            text = "Chat Bot For Task Creation"
+            text = "TrackoField  •  Smart Task Assistant"
         )
 
 
