@@ -10,6 +10,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.SocketTimeoutException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -54,6 +56,7 @@ class ChatViewModel: ViewModel() {
     @RequiresApi(Build.VERSION_CODES.O)
     fun sendMessage(question: String) {
         messageList.add(MessageModel(question,"user"))
+
         messageList.add(MessageModel("Typing...","model"))
         if(!currentTask.allfilled){
             sendPromptToServer(question)
@@ -67,90 +70,117 @@ class ChatViewModel: ViewModel() {
             promptWithHistory="this is old  start time : ${previousTask.startTime} and this is new prompt :"+promptWithHistory
         }
         val prompt = PromptRequest(promptWithHistory)
+
         viewModelScope.launch {
             Log.i("original prior","inside" )
-            val call= RetrofitClient.apiService.sendPrompt(prompt)
-            Log.i("original", call.body().toString())
-            if (call.isSuccessful && call.body() != null) {
-                val taskData: TaskData = call.body()!!.answer
-                Log.i("res1", taskData.toString())
-                currentTask=taskData
-//                messageList.add(MessageModel(taskData.message.toString(),"model"))
-//                messageList.removeAt(messageList.size - 2)
+            try {
+                val call = RetrofitClient.apiService.sendPrompt(prompt)
+                Log.i("original", call.body().toString())
 
-                if(previousTask.taskDescription.toString().isNotEmpty() && currentTask.taskDescription.toString().isEmpty()){
-                    currentTask.taskDescription=previousTask.taskDescription
-                }
-                if(previousTask.priority.toString().isNotEmpty() && currentTask.priority.toString().isEmpty()){
-                    currentTask.priority=previousTask.priority
-                }
-                if(previousTask.startTime.toString().isNotEmpty() && currentTask.startTime.toString().isEmpty()){
-                    currentTask.startTime=previousTask.startTime
-                }
-                if(previousTask.endTime.toString().isNotEmpty() && currentTask.endTime.toString().isEmpty()){
-                    currentTask.endTime=previousTask.endTime
-                }
-                if(currentTask.taskDescription!=null &&currentTask.priority!=null && currentTask.startTime!=null &&currentTask.endTime!=null ){
-                    currentTask.allfilled=true
-                }
-                var missingFields = mutableListOf<String>()
-                var missingMessage="Please provide: "
+                if (call.isSuccessful && call.body() != null) {
+                    val taskData: TaskData = call.body()!!.answer
+                    Log.i("res1", taskData.toString())
 
-                if(currentTask.taskDescription==null){
-                    missingFields.add("Task Description")
-                }
-                if(currentTask.priority==null){
-                    missingFields.add("Priority")
-                }
-                if(currentTask.startTime==null){
-                    missingFields.add("Start Time")
-                }
-                if(currentTask.startTime!=null){
-                    val formatter= DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a")
-                    val currentDateTime = LocalDateTime.now()
-                    val start= LocalDateTime.parse(currentTask.startTime,formatter)
-                    if(currentDateTime.isAfter(start)){
-                        missingFields.add("Start time should be more than current time")
+                    currentTask = taskData
+                    //                messageList.add(MessageModel(taskData.message.toString(),"model"))
+                    //                messageList.removeAt(messageList.size - 2)
+
+                    if (previousTask.taskDescription.toString()
+                            .isNotEmpty() && currentTask.taskDescription.toString().isEmpty()
+                    ) {
+                        currentTask.taskDescription = previousTask.taskDescription
                     }
-                }
-
-                if(currentTask.endTime!=null &&currentTask.startTime!=null){
-                    val formatter= DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a")
-                    val currentDateTime = LocalDateTime.now()
-                    val start= LocalDateTime.parse(currentTask.startTime,formatter)
-                    val end= LocalDateTime.parse(currentTask.endTime,formatter)
-                    if(start.isAfter(end)){
-                        missingFields.add("End time should be more than Start time : ${currentTask.startTime}")
+                    if (previousTask.priority.toString()
+                            .isNotEmpty() && currentTask.priority.toString().isEmpty()
+                    ) {
+                        currentTask.priority = previousTask.priority
                     }
+                    if (previousTask.startTime.toString()
+                            .isNotEmpty() && currentTask.startTime.toString().isEmpty()
+                    ) {
+                        currentTask.startTime = previousTask.startTime
+                    }
+                    if (previousTask.endTime.toString()
+                            .isNotEmpty() && currentTask.endTime.toString().isEmpty()
+                    ) {
+                        currentTask.endTime = previousTask.endTime
+                    }
+                    if (currentTask.taskDescription != null && currentTask.priority != null && currentTask.startTime != null && currentTask.endTime != null) {
+                        currentTask.allfilled = true
+                    }
+                    var missingFields = mutableListOf<String>()
+                    var missingMessage = "Please provide: "
+
+                    if (currentTask.taskDescription == null) {
+                        missingFields.add("Task Description")
+                    }
+                    if (currentTask.priority == null) {
+                        missingFields.add("Priority")
+                    }
+                    if (currentTask.startTime == null) {
+                        missingFields.add("Start Time")
+                    }
+
+
+                    if (currentTask.endTime == null) {
+                        missingFields.add("End Time")
+                    }
+
+                    if (currentTask.startTime != null) {
+                        val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a")
+                        val currentDateTime = LocalDateTime.now()
+                        val start = LocalDateTime.parse(currentTask.startTime, formatter)
+                        if (currentDateTime.isAfter(start)) {
+                            Log.i("icon", "Start time should be more than current time")
+                            missingFields.add("\n❗Start time should be more than current time")
+                        }
+                    }
+
+                    if (currentTask.endTime != null && currentTask.startTime != null) {
+                        val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a")
+                        val currentDateTime = LocalDateTime.now()
+                        val start = LocalDateTime.parse(currentTask.startTime, formatter)
+                        val end = LocalDateTime.parse(currentTask.endTime, formatter)
+                        if (start.isAfter(end)) {
+                            missingFields.add("\n❗End time should be more than Start time : ${currentTask.startTime}")
+                        }
+                    }
+
+
+                    for (field in missingFields) {
+                        missingMessage = missingMessage + field.toString() + ", "
+                    }
+
+                    if (missingFields.size > 0) {
+                        currentTask.message = missingMessage.dropLast(2)
+                    }
+                    missingFields.clear()
+                    Log.i("Current task", currentTask.toString())
+                    if (!currentTask.allfilled) {
+                        messageList.add(MessageModel(currentTask.message.toString(), "model"))
+                        messageList.removeAt(messageList.size - 2)
+                    } else {
+                        //                    messageList.add(MessageModel("Please select site type", "model"))
+                        messageList.removeAt(messageList.size - 1)
+                        showSiteTypeSelector = true
+                    }
+                    previousTask = currentTask
+
+                } else {
+                    Log.i("error", "response unsuccessful or empty")
                 }
-
-                if(currentTask.endTime==null){
-                    missingFields.add("End Time")
-                }
-
-                for (field in missingFields) {
-                    missingMessage=missingMessage+field.toString()+", "
-                }
-
-                if(missingFields.size>0){
-                    currentTask.message=missingMessage.dropLast(2)
-                }
-                missingFields.clear()
-                Log.i("Current task",currentTask.toString())
-                if(!currentTask.allfilled){
-                    messageList.add(MessageModel(currentTask.message.toString(),"model"))
-                    messageList.removeAt(messageList.size - 2)
-                }else{
-//                    messageList.add(MessageModel("Please select site type", "model"))
-                    messageList.removeAt(messageList.size - 1)
-                    showSiteTypeSelector=true
-                }
-                previousTask=currentTask
-
-
-
-            } else {
-                Log.i("error", "response unsuccessful or empty")
+            } catch (e: SocketTimeoutException) {
+                Log.e("timeout", "Timeout error: ${e.message}")
+                messageList.removeAt(messageList.size - 1) // remove "Typing..."
+                messageList.add(MessageModel("⏱ Timeout: Server took too long to respond.", "model"))
+            } catch (e: IOException) {
+                Log.e("network", "Network error: ${e.message}")
+                messageList.removeAt(messageList.size - 1) // remove "Typing..."
+                messageList.add(MessageModel("📶 Network error: check your Internet connection ", "model"))
+            } catch (e: Exception) {
+                Log.e("exception", "Unexpected error: ${e.message}")
+                messageList.removeAt(messageList.size - 1) // remove "Typing..."
+                messageList.add(MessageModel("❗ Unexpected error: ${e.message}", "model"))
             }
         }
 
